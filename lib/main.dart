@@ -69,23 +69,42 @@ class StockScreen extends StatefulWidget {
 
 class _StockScreenState extends State<StockScreen> {
   List<Product> products = [];
+  List<Product> displayedProducts = []; // New list for displayed products
+
   void editProduct(int index, Product editedProduct) {
     setState(() {
       products[index] = editedProduct;
+      updateDisplayedProducts(); // Update displayed products after edit
     });
   }
 
   void addProduct(Product product) {
     setState(() {
       products.add(product);
+      updateDisplayedProducts(); // Update displayed products after add
     });
   }
 
   void deleteProduct(int index) {
     setState(() {
       products.removeAt(index);
+      updateDisplayedProducts(); // Update displayed products after delete
     });
   }
+
+  void updateDisplayedProducts() {
+    // Filter products based on search query
+    setState(() {
+      displayedProducts = products.where((product) {
+        final query = _searchController.text.toLowerCase();
+        return product.name.toLowerCase().contains(query) ||
+            product.quantity.toString().contains(query) ||
+            product.price.toString().contains(query);
+      }).toList();
+    });
+  }
+
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +131,10 @@ class _StockScreenState extends State<StockScreen> {
           Padding(
             padding: EdgeInsets.all(16.0),
             child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                updateDisplayedProducts(); // Update displayed products on search
+              },
               decoration: InputDecoration(
                 hintText: 'Search...',
                 prefixIcon: Icon(Icons.search),
@@ -125,7 +148,7 @@ class _StockScreenState extends State<StockScreen> {
               DataColumn(label: Text('Price')),
               DataColumn(label: Text('Actions')),
             ],
-            rows: products.asMap().entries.map((entry) {
+            rows: displayedProducts.asMap().entries.map((entry) {
               int index = entry.key;
               Product product = entry.value;
 
@@ -138,7 +161,7 @@ class _StockScreenState extends State<StockScreen> {
                     IconButton(
                       icon: Icon(Icons.edit),
                       onPressed: () {
-// Show the form when the edit icon is pressed
+                        // Show the form when the edit icon is pressed
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
