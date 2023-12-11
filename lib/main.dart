@@ -69,6 +69,11 @@ class StockScreen extends StatefulWidget {
 
 class _StockScreenState extends State<StockScreen> {
   List<Product> products = [];
+  void editProduct(int index, Product editedProduct) {
+    setState(() {
+      products[index] = editedProduct;
+    });
+  }
 
   void addProduct(Product product) {
     setState(() {
@@ -133,8 +138,17 @@ class _StockScreenState extends State<StockScreen> {
                     IconButton(
                       icon: Icon(Icons.edit),
                       onPressed: () {
-                        // Implement edit functionality here
-                        print('Edit product: ${product.name}');
+// Show the form when the edit icon is pressed
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return EditProductForm(
+                              index,
+                              product,
+                              editProduct,
+                            );
+                          },
+                        );
                       },
                     ),
                     IconButton(
@@ -230,6 +244,67 @@ class CustomerTrackScreen extends StatelessWidget {
           style: TextStyle(fontSize: 20.0),
         ),
       ),
+    );
+  }
+}
+
+class EditProductForm extends StatelessWidget {
+  final int index;
+  final Product originalProduct;
+  final Function(int, Product) onFormSubmit;
+  final TextEditingController nameController;
+  final TextEditingController quantityController;
+  final TextEditingController priceController;
+
+  EditProductForm(this.index, this.originalProduct, this.onFormSubmit)
+      : nameController = TextEditingController(text: originalProduct.name),
+        quantityController =
+            TextEditingController(text: originalProduct.quantity.toString()),
+        priceController =
+            TextEditingController(text: originalProduct.price.toString());
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Edit Product'),
+      content: Form(
+        child: Column(
+          children: [
+            TextFormField(
+              controller: nameController,
+              decoration: InputDecoration(labelText: 'Name'),
+            ),
+            TextFormField(
+              controller: quantityController,
+              decoration: InputDecoration(labelText: 'Quantity'),
+              keyboardType: TextInputType.number,
+            ),
+            TextFormField(
+              controller: priceController,
+              decoration: InputDecoration(labelText: 'Price'),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        ElevatedButton(
+          onPressed: () {
+            // Process the submitted form data
+            Product editedProduct = Product(
+              name: nameController.text,
+              quantity: int.tryParse(quantityController.text) ?? 0,
+              price: double.tryParse(priceController.text) ?? 0.0,
+            );
+
+            onFormSubmit(index, editedProduct);
+
+            // Close the dialog
+            Navigator.of(context).pop();
+          },
+          child: Text('Save Changes'),
+        ),
+      ],
     );
   }
 }
